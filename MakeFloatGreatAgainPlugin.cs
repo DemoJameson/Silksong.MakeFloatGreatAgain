@@ -80,9 +80,9 @@ public partial class MakeFloatGreatAgainPlugin : BaseUnityPlugin {
         var inputActions = heroController.inputHandler.inputActions;
 
         if(InvertCondition(
-            Condition(downInput, inputHandler.inputActions.Down.IsPressed) ||
-            Condition(upInput, inputHandler.inputActions.Up.IsPressed) ||
-            Condition(needolinInput, inputHandler.inputActions.DreamNail.IsPressed) ||
+            Condition(downInput, inputHandler.inputActions.Down.IsPressed),
+            Condition(upInput, inputHandler.inputActions.Up.IsPressed),
+            Condition(needolinInput, inputHandler.inputActions.DreamNail.IsPressed),
             Condition(quickMapInput, inputHandler.inputActions.QuickMap.IsPressed)
         )) {
             return hasDoubleJump && !HorizontalCondition(inputHandler.inputActions);
