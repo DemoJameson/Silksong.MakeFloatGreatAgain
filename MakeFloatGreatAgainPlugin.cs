@@ -37,7 +37,7 @@ public partial class MakeFloatGreatAgainPlugin : BaseUnityPlugin {
             true,
             "Whether down input blocks double jump");
         upInput = Config.Bind("General.Inputs",
-            "Hold Down",
+            "Hold Up",
             false,
             "Whether up input blocks double jump");
         needolinInput = Config.Bind("General.Inputs",
@@ -79,19 +79,18 @@ public partial class MakeFloatGreatAgainPlugin : BaseUnityPlugin {
 
         var inputActions = heroController.inputHandler.inputActions;
 
-        return hasDoubleJump && !(
-            HorizontalCondition(inputActions) &&
-            InvertCondition(
-                Condition(downInput, inputActions.Down.IsPressed) ||
-                Condition(upInput, inputActions.Up.IsPressed) ||
-                Condition(needolinInput, inputActions.DreamNail.IsPressed) ||
-                Condition(quickMapInput, inputActions.QuickMap.IsPressed)
-            )
-        );
+        if(Condition(downInput, inputHandler.inputActions.Down.IsPressed) &&
+            Condition(upInput, inputHandler.inputActions.Up.IsPressed) &&
+            Condition(needolinInput, inputHandler.inputActions.DreamNail.IsPressed) &&
+            Condition(quickMapInput, inputHandler.inputActions.QuickMap.IsPressed)
+        ) {
+            return !HorizontalCondition(inputHandler.inputActions);
+        }
+        return hasDoubleJump;
     }
 
     private static bool HorizontalCondition(HeroActions inputActions) {
-        return allowHorizontalInput.Value ? true : (!inputActions.Right.IsPressed && !inputActions.Left.IsPressed);
+	    return allowHorizontalInput.Value ? true : (!inputActions.Right.IsPressed && !inputActions.Left.IsPressed);
     }
 
     private static bool InvertCondition(bool result) {
@@ -99,6 +98,6 @@ public partial class MakeFloatGreatAgainPlugin : BaseUnityPlugin {
     }
 
     private static bool Condition(ConfigEntry<bool> isRequired, bool ifTrue) {
-        return isRequired.Value ? ifTrue : true;
+        return isRequired.Value ? InvertCondition(ifTrue) : true;
     }
 }
