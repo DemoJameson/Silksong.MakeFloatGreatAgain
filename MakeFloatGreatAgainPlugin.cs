@@ -79,12 +79,13 @@ public partial class MakeFloatGreatAgainPlugin : BaseUnityPlugin {
 
         var inputActions = heroController.inputHandler.inputActions;
 
-        if(Condition(downInput, inputHandler.inputActions.Down.IsPressed) &&
-            Condition(upInput, inputHandler.inputActions.Up.IsPressed) &&
-            Condition(needolinInput, inputHandler.inputActions.DreamNail.IsPressed) &&
+        if(InvertCondition(
+            Condition(downInput, inputHandler.inputActions.Down.IsPressed) ||
+            Condition(upInput, inputHandler.inputActions.Up.IsPressed) ||
+            Condition(needolinInput, inputHandler.inputActions.DreamNail.IsPressed) ||
             Condition(quickMapInput, inputHandler.inputActions.QuickMap.IsPressed)
-        ) {
-            return !HorizontalCondition(inputHandler.inputActions);
+        )) {
+            return hasDoubleJump && !HorizontalCondition(inputHandler.inputActions);
         }
         return hasDoubleJump;
     }
@@ -93,11 +94,15 @@ public partial class MakeFloatGreatAgainPlugin : BaseUnityPlugin {
 	    return allowHorizontalInput.Value ? true : (!inputActions.Right.IsPressed && !inputActions.Left.IsPressed);
     }
 
-    private static bool InvertCondition(bool result) {
-        return invertCondition.Value ? !result : result;
+    private static bool InvertCondition(params bool[] results) {
+        bool output = invertCondition.Value;
+        foreach(bool result in results) {
+            output = invertCondition.Value ? (output && !result) : (output || result);
+        }
+        return output;
     }
 
     private static bool Condition(ConfigEntry<bool> isRequired, bool ifTrue) {
-        return isRequired.Value ? InvertCondition(ifTrue) : true;
+        return isRequired.Value ? ifTrue : false;
     }
 }
