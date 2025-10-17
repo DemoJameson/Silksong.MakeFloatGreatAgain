@@ -98,7 +98,7 @@ public partial class MakeFloatGreatAgainPlugin : BaseUnityPlugin {
         return invertCondition.Value ? !result : result;
     }
 
-    private static bool Condition(bool isRequired, bool ifTrue) {
-        return isRequired ? ifTrue : true;
+    private static bool Condition(ConfigEntry<bool> isRequired, bool ifTrue) {
+        return isRequired.Value ? ifTrue : true;
     }
 }
