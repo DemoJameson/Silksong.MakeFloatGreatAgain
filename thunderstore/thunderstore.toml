@@ -5,7 +5,7 @@ schemaVersion = "0.0.1"
 # The name of the team you are publishing as
 namespace = "DemoJameson"
 # max 250 characters
-description = "Re-add float override input (down + jump, after player has Faydown Cloak)."
+description = "Re-add float override input (down + jump, after player has Faydown Cloak) with extensive customization options."
 
 # Replace this with a correct repo URL if the default is not accurate
 websiteUrl = "https://github.com/DemoJameson/Silksong.MakeFloatGreatAgain"
@@ -29,9 +29,9 @@ source = "./tmp"
 target = "/"
 
 # additional files and directories can be added to the package like this:
-# [[build.copy]]
-# source = "./CHANGELOG.md"
-# target = "/"
+[[build.copy]]
+source = "../CHANGELOG.md"
+target = "/"
 
 
 [publish]
