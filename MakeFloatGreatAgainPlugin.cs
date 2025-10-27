@@ -14,7 +14,8 @@ namespace Silksong.MakeFloatGreatAgain;
 public partial class MakeFloatGreatAgainPlugin : BaseUnityPlugin {
     private static ManualLogSource logger;
     private static ConfigEntry<bool> enabled;
-    private static ConfigEntry<bool> allowDownwardDiagonal;
+    private static ConfigEntry<bool> allowHorizontalInput;
+    private static ConfigEntry<bool> downInput, upInput, needolinInput, quickMapInput, invertCondition;
     private Harmony harmony;
 
     private void Awake() {
@@ -23,10 +24,30 @@ public partial class MakeFloatGreatAgainPlugin : BaseUnityPlugin {
             "Float Override Input",
             true,
             "Whether to enable float override input");
-        allowDownwardDiagonal = Config.Bind("General",
-            "Allow Downward Diagonal",
+        allowHorizontalInput = Config.Bind("General",
+            "Allow Horizontal Input",
             false,
-            "Whether to allow diagonal down + jump to trigger floating");
+            "Whether to allow horizontal input to trigger floating");
+        invertCondition = Config.Bind("General",
+            "Invert General.Inputs checks",
+            false,
+            "Whether to invert the result of General.Inputs checks");
+        downInput = Config.Bind("General.Inputs",
+            "Hold Down",
+            true,
+            "Whether down input blocks double jump");
+        upInput = Config.Bind("General.Inputs",
+            "Hold Up",
+            false,
+            "Whether up input blocks double jump");
+        needolinInput = Config.Bind("General.Inputs",
+            "Hold Needolin",
+            false,
+            "Whether needolin input blocks double jump");
+        quickMapInput = Config.Bind("General.Inputs",
+            "Hold Quick Map",
+            false,
+            "Whether quick map input blocks double jump");
         harmony = Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly());
     }
 
@@ -57,16 +78,31 @@ public partial class MakeFloatGreatAgainPlugin : BaseUnityPlugin {
         }
 
         var inputActions = heroController.inputHandler.inputActions;
-        if (inputActions.Down.IsPressed) {
-            if (allowDownwardDiagonal.Value) {
-                return false;
-            }
 
-            if (!inputActions.Right.IsPressed && !inputActions.Left.IsPressed) {
-                return false;
-            }
+        if(InvertCondition(
+            Condition(downInput, inputActions.Down.IsPressed),
+            Condition(upInput, inputActions.Up.IsPressed),
+            Condition(needolinInput, inputActions.DreamNail.IsPressed),
+            Condition(quickMapInput, inputActions.QuickMap.IsPressed)
+        )) {
+            return hasDoubleJump && !HorizontalCondition(inputActions);
         }
-
         return hasDoubleJump;
+    }
+
+    private static bool HorizontalCondition(HeroActions inputActions) {
+	    return allowHorizontalInput.Value ? true : (!inputActions.Right.IsPressed && !inputActions.Left.IsPressed);
+    }
+
+    private static bool InvertCondition(params bool[] results) {
+        bool output = invertCondition.Value;
+        foreach(bool result in results) {
+            output = invertCondition.Value ? (output && !result) : (output || result);
+        }
+        return output;
+    }
+
+    private static bool Condition(ConfigEntry<bool> isRequired, bool ifTrue) {
+        return isRequired.Value ? ifTrue : false;
     }
 }
