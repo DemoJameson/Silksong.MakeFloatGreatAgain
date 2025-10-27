@@ -2,9 +2,6 @@ using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using Mono.Cecil.Cil;
-using MonoMod.Cil;
-using System;
 using System.Reflection;
 
 namespace Silksong.MakeFloatGreatAgain;
@@ -21,9 +18,9 @@ public partial class MakeFloatGreatAgainPlugin : BaseUnityPlugin {
     private void Awake() {
         logger = Logger;
         enabled = Config.Bind("General",
-            "Float Override Input",
+            "Enable Float Override",
             true,
-            "Whether to enable float override input");
+            "Whether to enable float override functionality");
         allowHorizontalInput = Config.Bind("General",
             "Allow Horizontal Input",
             false,
@@ -56,27 +53,14 @@ public partial class MakeFloatGreatAgainPlugin : BaseUnityPlugin {
     }
 
     [HarmonyPatch(typeof(HeroController), nameof(HeroController.CanDoubleJump))]
-    [HarmonyILManipulator]
-    private static void IlCanDoubleJump(ILContext ctx) {
-        var ilCursor = new ILCursor(ctx);
-        // if (playerData.hasDoubleJump && !doubleJumped && !IsDashLocked() && !cState.wallSliding && !cState.backDashing && !IsAttackLocked() && !cState.bouncing && !cState.shroomBouncing && !cState.onGround && !cState.doubleJumping && Config.CanDoubleJump)
-        // ↓
-        // if (playerData.hasDoubleJump && AllowDoubleJump() && !doubleJumped...
-        if (!ilCursor.TryGotoNext(MoveType.After,
-                instruction => instruction.OpCode == OpCodes.Ldfld &&
-                               instruction.Operand.ToString().EndsWith(nameof(PlayerData.hasDoubleJump)))) {
-            logger.LogWarning("Failed to find instruction in HeroController.CanDoubleJump()");
-            return;
-        }
+    [HarmonyPostfix]
+    private static void HeroControllerCanDoubleJump(HeroController __instance, ref bool __result) {
+        if (!__result || !enabled.Value) return;
 
-        ilCursor.Emit(OpCodes.Ldarg_0).EmitDelegate<Func<bool, HeroController, bool>>(AllowDoubleJump);
+        __result = !AllowFloat(__instance);
     }
 
-    private static bool AllowDoubleJump(bool hasDoubleJump, HeroController heroController) {
-        if (!enabled.Value) {
-            return hasDoubleJump;
-        }
-
+    private static bool AllowFloat(HeroController heroController) {
         var inputActions = heroController.inputHandler.inputActions;
 
         if(InvertCondition(
@@ -85,9 +69,10 @@ public partial class MakeFloatGreatAgainPlugin : BaseUnityPlugin {
             Condition(needolinInput, inputActions.DreamNail.IsPressed),
             Condition(quickMapInput, inputActions.QuickMap.IsPressed)
         )) {
-            return hasDoubleJump && !HorizontalCondition(inputActions);
+            return HorizontalCondition(inputActions);
         }
-        return hasDoubleJump;
+
+        return false;
     }
 
     private static bool HorizontalCondition(HeroActions inputActions) {
